@@ -12,8 +12,8 @@ import { dynamics, useGetRpcUrlByChainId } from 'config';
 import { OrbyProvider } from '@orbykit/react';
 
 const orbyConfig = {
-  clientId: 'orblabs-internal-frontend',
-  clientSecret: 'orblabs-internal-frontend',
+  clientId: dynamics.orbyClientId,
+  clientSecret: dynamics.orbyClientSecret,
 };
 
 const Web3Provider: FC<PropsWithChildren> = ({ children }) => {

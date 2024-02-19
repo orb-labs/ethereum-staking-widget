@@ -47,3 +47,11 @@ export const prefillUnsafeElRpcUrls17000 = process.env.PREFILL_UNSAFE_EL_RPC_URL
 
 /** @type string */
 export const widgetApiBasePathForIpfs = process.env.WIDGET_API_BASE_PATH_FOR_IPFS;
+
+// CUSTOM ENVIRONMENT VARIABLES BELOw
+
+/** @type string */
+export const orbyClientId = process.env.ORBY_CLIENT_ID;
+
+/** @type string */
+export const orbyClientSecret = process.env.ORBY_CLIENT_SECRET;
