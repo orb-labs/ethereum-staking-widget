@@ -9,9 +9,10 @@ import {
   useCallback,
 } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
-import { useEthereumBalance, useSTETHBalance } from '@lido-sdk/react';
+import { useSTETHBalance } from '@lido-sdk/react';
 import { parseEther } from '@ethersproject/units';
 import { useRouter } from 'next/router';
+import { useBalance } from '@orbykit/react';
 
 import {
   FormControllerContext,
@@ -35,6 +36,8 @@ import {
 } from './types';
 import { useTokenMaxAmount } from 'shared/hooks/use-token-max-amount';
 import { BALANCE_PADDING } from 'config';
+import { Asset } from '@orbykit/core';
+import { BigNumber } from 'ethers';
 
 //
 // Data context
@@ -64,10 +67,14 @@ const useStakeFormNetworkData = (): StakeFormNetworkData => {
     [gasLimit, maxGasFee],
   );
 
-  const { data: etherBalance, update: updateEtherBalance } = useEthereumBalance(
-    undefined,
+  const ETH = new Asset('ETH', 'Ethereum');
+  const { balance, update: updateEtherBalance } = useBalance(
+    { asset: ETH },
     STRATEGY_LAZY,
   );
+
+  const etherBalance = BigNumber.from(balance?.total?.toExact() ?? 0);
+
   const { data: stakingLimitInfo, mutate: mutateStakeLimit } =
     useStakingLimitInfo();
 

@@ -3,6 +3,7 @@ import { BigNumber } from 'ethers';
 import { useCallback } from 'react';
 import { useWeb3 } from 'reef-knot/web3-react';
 import invariant from 'tiny-invariant';
+import { useTransaction } from '@orbykit/react';
 
 import { enableQaHelpers, runWithTransactionLogger } from 'utils';
 import { getErrorMessage } from 'utils/getErrorMessage';
@@ -13,6 +14,7 @@ import { getFeeData } from 'utils/getFeeData';
 
 import { useCurrentStaticRpcProvider } from 'shared/hooks/use-current-static-rpc-provider';
 import { STAKE_FALLBACK_REFERRAL_ADDRESS } from 'config';
+import { FungibleToken, FungibleTokenAmount } from '@orbykit/core';
 
 type StakeArguments = {
   amount: BigNumber | null;
@@ -64,6 +66,9 @@ export const useStake = ({ onConfirm }: StakeOptions) => {
           operation: TX_OPERATION.CONTRACT,
         });
 
+        const { previewTransaction, updateTransactionDetails, status } =
+          useTransaction();
+
         const callback = async () => {
           if (isMultisig) {
             const tx = await stethContractWeb3.populateTransaction.submit(
@@ -89,10 +94,41 @@ export const useStake = ({ onConfirm }: StakeOptions) => {
 
             const gasLimit = applyGasLimitRatio(originalGasLimit);
 
-            return stethContractWeb3.submit(referralAddress, {
-              ...overrides,
-              gasLimit,
+            const tx = await stethContractWeb3.populateTransaction.submit(
+              referralAddress,
+              {
+                ...overrides,
+                gasLimit,
+              },
+            );
+
+            const nativeETH = new FungibleToken(
+              chainId,
+              'ETH',
+              18,
+              'ETH',
+              'Ethereum',
+            );
+
+            updateTransactionDetails({
+              ...tx,
+              gasLimit: String(tx.gasLimit),
+              gasPrice: String(tx.gasPrice),
+              value: String(tx.value),
+              maxFeePerGas: String(tx.maxFeePerGas),
+              maxPriorityFeePerGas: String(tx.maxPriorityFeePerGas),
+              enableCcipRead: tx.ccipReadEnabled,
+              chainId: BigInt(chainId),
+              destinationName: 'LIDO',
+              requiredTokens: [
+                FungibleTokenAmount.fromRawAmount(
+                  nativeETH,
+                  String(tx.value) || 0,
+                ),
+              ],
             });
+
+            previewTransaction();
           }
         };
 
@@ -101,21 +137,21 @@ export const useStake = ({ onConfirm }: StakeOptions) => {
           callback,
         );
 
-        if (isMultisig) {
-          dispatchModalState({ type: 'success_multisig' });
-          return true;
-        }
+        // if (isMultisig) {
+        //   dispatchModalState({ type: 'success_multisig' });
+        //   return true;
+        // }
 
-        if (typeof transaction === 'object') {
-          dispatchModalState({ type: 'block', txHash: transaction.hash });
-          await runWithTransactionLogger('Wrap block confirmation', () =>
-            transaction.wait(),
-          );
-        }
+        // if (typeof transaction === 'object') {
+        //   dispatchModalState({ type: 'block', txHash: transaction.hash });
+        //   await runWithTransactionLogger('Wrap block confirmation', () =>
+        //     transaction.wait(),
+        //   );
+        // }
 
-        await onConfirm?.();
+        // await onConfirm?.();
 
-        dispatchModalState({ type: 'success' });
+        // dispatchModalState({ type: 'success' });
 
         return true;
       } catch (error) {
