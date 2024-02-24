@@ -67,13 +67,15 @@ const useStakeFormNetworkData = (): StakeFormNetworkData => {
     [gasLimit, maxGasFee],
   );
 
-  const ETH = new Asset('ETH', 'Ethereum');
+  const ETH = useMemo(() => new Asset('ETH', 'Ethereum'), []);
   const { balance, update: updateEtherBalance } = useBalance(
     { asset: ETH },
     STRATEGY_LAZY,
   );
 
-  const etherBalance = BigNumber.from(balance?.total?.toExact() ?? 0);
+  const etherBalance = useMemo(() => {
+    return BigNumber.from(balance?.total?.quotient?.toString() ?? 0);
+  }, [balance?.total]);
 
   const { data: stakingLimitInfo, mutate: mutateStakeLimit } =
     useStakingLimitInfo();
