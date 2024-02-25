@@ -1,4 +1,4 @@
-import { FC, PropsWithChildren, useEffect, useMemo } from 'react';
+import { FC, PropsWithChildren, useCallback, useEffect, useMemo } from 'react';
 import { useWeb3 } from 'reef-knot/web3-react';
 import { UseFormReset, useFormContext } from 'react-hook-form';
 import { useTransactionModal } from 'shared/transaction-modal';
@@ -24,10 +24,9 @@ export const FormController: FC<PropsWithChildren<FormControllerProps>> = ({
   const doSubmit = useMemo(
     () =>
       handleSubmit(async (args) => {
-        const success = await onSubmit(args);
-        if (success) reset();
+        await onSubmit(args);
       }),
-    [handleSubmit, onSubmit, reset],
+    [handleSubmit, onSubmit],
   );
 
   // Bind retry callback

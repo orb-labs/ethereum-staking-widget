@@ -145,7 +145,7 @@ export const StakeFormProvider: FC<PropsWithChildren> = ({ children }) => {
     resolver: stakeFormValidationResolver,
     mode: 'onChange',
   });
-  const { setValue } = formObject;
+  const { setValue, reset } = formObject;
 
   // consumes amount query param
   // SSG safe
@@ -166,7 +166,17 @@ export const StakeFormProvider: FC<PropsWithChildren> = ({ children }) => {
     }
   }, [router, setValue]);
 
-  const stake = useStake({ onConfirm: networkData.revalidate });
+  const onSubmissionCompletion = useCallback(
+    (success: boolean) => {
+      if (success) reset();
+    },
+    [reset],
+  );
+
+  const stake = useStake({
+    onConfirm: networkData.revalidate,
+    onSubmissionCompletion,
+  });
 
   const formControllerValue: FormControllerContextValueType<StakeFormInput> =
     useMemo(() => ({ onSubmit: stake }), [stake]);
