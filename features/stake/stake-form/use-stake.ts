@@ -1,8 +1,9 @@
 import { useSDK, useSTETHContractWeb3 } from '@lido-sdk/react';
 import { BigNumber } from 'ethers';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useWeb3 } from 'reef-knot/web3-react';
 import invariant from 'tiny-invariant';
+import { useTransaction } from '@orbykit/react';
 
 import { enableQaHelpers, runWithTransactionLogger } from 'utils';
 import { getErrorMessage } from 'utils/getErrorMessage';
@@ -13,6 +14,8 @@ import { getFeeData } from 'utils/getFeeData';
 
 import { useCurrentStaticRpcProvider } from 'shared/hooks/use-current-static-rpc-provider';
 import { STAKE_FALLBACK_REFERRAL_ADDRESS } from 'config';
+import { FungibleToken, FungibleTokenAmount } from '@orbykit/core';
+import { SendTransactionResult } from '@wagmi/core';
 
 type StakeArguments = {
   amount: BigNumber | null;
@@ -21,14 +24,58 @@ type StakeArguments = {
 
 type StakeOptions = {
   onConfirm?: () => Promise<void> | void;
+  onSubmissionCompletion: (isSuccessful: boolean) => void;
 };
 
-export const useStake = ({ onConfirm }: StakeOptions) => {
+export const useStake = ({
+  onConfirm,
+  onSubmissionCompletion,
+}: StakeOptions) => {
   const stethContractWeb3 = useSTETHContractWeb3();
   const { account, chainId } = useWeb3();
   const { staticRpcProvider } = useCurrentStaticRpcProvider();
   const { providerWeb3, providerRpc } = useSDK();
   const { dispatchModalState } = useTransactionModal();
+  const { previewTransaction, updateTransactionDetails, status } =
+    useTransaction();
+  const nativeETH = useMemo(() => {
+    if (!chainId) return undefined;
+
+    return new FungibleToken(
+      chainId,
+      '0x',
+      18,
+      'ETH',
+      'Ethereum',
+      undefined,
+      true,
+    );
+  }, []);
+
+  const onConfirmCallback = useCallback(
+    async (
+      isSuccessful: boolean,
+      transaction?: SendTransactionResult,
+      error?: string,
+    ) => {
+      if (isSuccessful) {
+        dispatchModalState({ type: 'block', txHash: transaction?.hash });
+        await runWithTransactionLogger('Wrap block confirmation', () =>
+          transaction!.wait(),
+        );
+
+        dispatchModalState({ type: 'success' });
+      } else {
+        dispatchModalState({ type: 'error', errorText: error });
+      }
+
+      await onConfirm?.();
+
+      onSubmissionCompletion?.(isSuccessful);
+    },
+    [],
+  );
+
   return useCallback(
     async ({ amount, referral }: StakeArguments): Promise<boolean> => {
       try {
@@ -37,13 +84,6 @@ export const useStake = ({ onConfirm }: StakeOptions) => {
         invariant(account, 'account is not defined');
         invariant(providerWeb3, 'providerWeb3 not defined');
         invariant(stethContractWeb3, 'steth is not defined');
-
-        dispatchModalState({
-          type: 'start',
-          operation: TX_OPERATION.CONTRACT,
-          token: 'ETH',
-          amount,
-        });
 
         if (
           enableQaHelpers &&
@@ -59,11 +99,6 @@ export const useStake = ({ onConfirm }: StakeOptions) => {
             : STAKE_FALLBACK_REFERRAL_ADDRESS,
         ]);
 
-        dispatchModalState({
-          type: 'signing',
-          operation: TX_OPERATION.CONTRACT,
-        });
-
         const callback = async () => {
           if (isMultisig) {
             const tx = await stethContractWeb3.populateTransaction.submit(
@@ -74,6 +109,10 @@ export const useStake = ({ onConfirm }: StakeOptions) => {
             );
             return providerWeb3.getSigner().sendUncheckedTransaction(tx);
           } else {
+            if (!nativeETH) {
+              throw new Error('Native ETH not defined');
+            }
+
             const { maxFeePerGas, maxPriorityFeePerGas } =
               await getFeeData(staticRpcProvider);
             const overrides = {
@@ -82,40 +121,48 @@ export const useStake = ({ onConfirm }: StakeOptions) => {
               maxFeePerGas,
             };
 
-            const originalGasLimit = await stethContractWeb3.estimateGas.submit(
+            // estimateGas errors if there not enough ETH in the account. Given we know the
+            // gas consumption for the deposit function we ca hardcode it here without calling the contract
+            const gasLimit = applyGasLimitRatio(BigNumber.from(100_000));
+            const tx = await stethContractWeb3.populateTransaction.submit(
               referralAddress,
-              overrides,
+              {
+                ...overrides,
+                gasLimit,
+              },
             );
 
-            const gasLimit = applyGasLimitRatio(originalGasLimit);
+            updateTransactionDetails(
+              {
+                ...tx,
+                gasLimit: String(tx.gasLimit),
+                gasPrice: String(tx.gasPrice),
+                value: String(tx.value),
+                maxFeePerGas: String(tx.maxFeePerGas),
+                maxPriorityFeePerGas: String(tx.maxPriorityFeePerGas),
+                enableCcipRead: tx.ccipReadEnabled,
+                chainId: BigInt(chainId),
+                destinationName: 'LIDO',
+                requiredTokens: [
+                  FungibleTokenAmount.fromRawAmount(
+                    nativeETH,
+                    String(tx.value) || 0,
+                  ),
+                ],
+              },
+              onConfirmCallback,
+            );
 
-            return stethContractWeb3.submit(referralAddress, {
-              ...overrides,
-              gasLimit,
-            });
+            previewTransaction();
           }
         };
 
-        const transaction = await runWithTransactionLogger(
-          'Stake signing',
-          callback,
-        );
+        await runWithTransactionLogger('Stake signing', callback);
 
         if (isMultisig) {
           dispatchModalState({ type: 'success_multisig' });
           return true;
         }
-
-        if (typeof transaction === 'object') {
-          dispatchModalState({ type: 'block', txHash: transaction.hash });
-          await runWithTransactionLogger('Wrap block confirmation', () =>
-            transaction.wait(),
-          );
-        }
-
-        await onConfirm?.();
-
-        dispatchModalState({ type: 'success' });
 
         return true;
       } catch (error) {
