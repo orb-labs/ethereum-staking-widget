@@ -9,12 +9,14 @@ import { getStaticRpcBatchProvider } from '@lido-sdk/providers';
 
 import { useClientConfig } from 'providers/client-config';
 import { dynamics, useGetRpcUrlByChainId } from 'config';
-import { OrbyProvider } from '@orbykit/react';
+import { OrbyProvider, lightTheme } from '@orbykit/react';
 
 const orbyConfig = {
   clientId: dynamics.orbyClientId,
   clientSecret: dynamics.orbyClientSecret,
 };
+
+const orbyTheme = lightTheme({ accentColor: '#00a3ff' });
 
 const Web3Provider: FC<PropsWithChildren> = ({ children }) => {
   const { defaultChain, supportedChainIds, walletconnectProjectId } =
@@ -98,7 +100,7 @@ const Web3Provider: FC<PropsWithChildren> = ({ children }) => {
         rpc={backendRPC}
         walletconnectProjectId={walletconnectProjectId}
       >
-        <OrbyProvider.withReefKnot config={orbyConfig}>
+        <OrbyProvider.withReefKnot config={orbyConfig} theme={orbyTheme}>
           {children}
         </OrbyProvider.withReefKnot>
       </ProviderWeb3>
