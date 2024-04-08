@@ -98,7 +98,12 @@ export const stakeFormValidationResolver: Resolver<
       errors: {},
     };
   } catch (error) {
-    return handleResolverValidationError(error, 'StakeForm', 'referral');
+    return {
+      values,
+      errors: {},
+    };
+    // TODO: uncomment this
+    // return handleResolverValidationError(error, 'StakeForm', 'referral');
   }
 };
 

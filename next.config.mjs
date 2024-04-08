@@ -87,6 +87,22 @@ export default withBundleAnalyzer({
     // Presumably, it is true by default in next v13 and won't be needed
     esmExternals: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'raw.githubusercontent.com',
+        port: '',
+        pathname: '/Uniswap/assets/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cryptologos.cc',
+        port: '',
+        pathname: '/logos/**',
+      },
+    ],
+  },
   webpack(config) {
     config.module.rules.push(
       // Teach webpack to import svg and md files
@@ -113,7 +129,7 @@ export default withBundleAnalyzer({
             },
           },
         ],
-      }
+      },
     );
 
     return config;

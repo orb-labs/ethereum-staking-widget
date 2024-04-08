@@ -9,7 +9,8 @@ import dynamics from './dynamics';
 
 export const getBackendRPCPath = (chainId: string | number): string => {
   const BASE_URL = typeof window === 'undefined' ? '' : window.location.origin;
-  return `${BASE_URL}/api/rpc?chainId=${chainId}`;
+  //return `${BASE_URL}/api/rpc?chainId=${chainId}`;
+  return 'CUSTOM_RPC_URL';
 };
 
 export const useGetRpcUrlByChainId = () => {

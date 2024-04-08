@@ -143,12 +143,6 @@ export const useStake = ({
                 enableCcipRead: tx.ccipReadEnabled,
                 chainId: BigInt(chainId),
                 destinationName: 'LIDO',
-                requiredTokens: [
-                  FungibleTokenAmount.fromRawAmount(
-                    nativeETH,
-                    String(tx.value) || 0,
-                  ),
-                ],
               },
               onConfirmCallback,
             );
