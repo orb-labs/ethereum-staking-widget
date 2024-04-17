@@ -142,7 +142,6 @@ export const useStake = ({
                 maxPriorityFeePerGas: String(tx.maxPriorityFeePerGas),
                 enableCcipRead: tx.ccipReadEnabled,
                 chainId: BigInt(chainId),
-                destinationName: 'LIDO',
               },
               onConfirmCallback,
             );
