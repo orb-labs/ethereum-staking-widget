@@ -9,11 +9,13 @@ import { getStaticRpcBatchProvider } from '@lido-sdk/providers';
 
 import { useClientConfig } from 'providers/client-config';
 import { dynamics, useGetRpcUrlByChainId } from 'config';
-import { OrbyProvider, lightTheme } from '@orbykit/react';
+import { OrbyProvider, lightTheme, OrbyConfig } from '@orbykit/react';
 
-const orbyConfig = {
+const orbyConfig: OrbyConfig = {
   clientId: dynamics.orbyClientId,
   clientSecret: dynamics.orbyClientSecret,
+  appName: 'Lido',
+  appLogo: '/assets/lido.svg',
 };
 
 const orbyTheme = lightTheme({ accentColor: '#00a3ff' });
