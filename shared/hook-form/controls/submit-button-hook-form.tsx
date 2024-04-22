@@ -5,6 +5,8 @@ import { ButtonIcon, Lock } from '@lidofinance/lido-ui';
 import { Connect } from 'shared/wallet';
 import { isValidationErrorTypeValidate } from '../validation/validation-error';
 
+import { useAccount } from '@orbykit/react';
+
 type SubmitButtonHookFormProps = Partial<
   React.ComponentProps<typeof ButtonIcon>
 > & {
@@ -19,7 +21,7 @@ export const SubmitButtonHookForm: React.FC<SubmitButtonHookFormProps> = ({
   disabled: disabledProp,
   ...props
 }) => {
-  const { active } = useWeb3();
+  // const { active } = useWeb3();
   const { isValidating, isSubmitting } = useFormState();
   const { errors } = useFormState<Record<string, unknown>>();
   const disabled =
@@ -27,6 +29,8 @@ export const SubmitButtonHookForm: React.FC<SubmitButtonHookFormProps> = ({
       !!errors[errorField] &&
       isValidationErrorTypeValidate(errors[errorField]?.type)) ||
     disabledProp;
+
+  const { isConnected: active } = useAccount();
 
   if (!active) return <Connect fullwidth />;
 

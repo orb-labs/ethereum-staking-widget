@@ -15,6 +15,8 @@ import { FlexCenter, LidoAprStyled, StyledCard } from './styles';
 import { useStakeFormData } from '../stake-form-context';
 import { STRATEGY_LAZY } from 'utils/swrStrategies';
 
+import { useAccount } from '@orbykit/react';
+
 const WalletComponent: WalletComponentType = (props) => {
   const { account } = useSDK();
   const { stakeableEther } = useStakeFormData();
@@ -91,6 +93,8 @@ const WalletComponent: WalletComponentType = (props) => {
 };
 
 export const Wallet: WalletComponentType = memo((props) => {
-  const { active } = useWeb3();
+  // const { active } = useWeb3();
+  const { isConnected: active } = useAccount();
+
   return active ? <WalletComponent {...props} /> : <Fallback {...props} />;
 });

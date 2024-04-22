@@ -17,12 +17,14 @@ import {
   IPFSInfoBoxOnlyDesktopWrapper,
 } from '../styles';
 
-import { ConnectedWallet } from '@orbykit/react';
+import { ConnectedWallet, useAccount } from '@orbykit/react';
 
 const HeaderWallet: FC = () => {
   const router = useRouter();
-  const { active } = useWeb3();
+  // const { active } = useWeb3();
   const { chainId } = useSDK();
+
+  const { isConnected: active } = useAccount();
 
   const chainName = CHAINS[chainId];
   const testNet = chainId !== CHAINS.Mainnet;
