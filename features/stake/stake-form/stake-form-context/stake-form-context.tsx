@@ -9,7 +9,6 @@ import {
   useCallback,
 } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
-import { useSTETHBalance } from '@lido-sdk/react';
 import { parseEther } from '@ethersproject/units';
 import { useRouter } from 'next/router';
 import { useBalance } from '@orbykit/react';
@@ -57,8 +56,21 @@ export const useStakeFormData = () => {
 };
 
 const useStakeFormNetworkData = (): StakeFormNetworkData => {
-  const { data: stethBalance, update: updateStethBalance } =
-    useSTETHBalance(STRATEGY_LAZY);
+  const stETH = useMemo(() => new Asset('stETH', 'Lido Staked ETH'), []);
+  const { balance: stethStandardizedBalance, update: updateStethBalance } =
+    useBalance(
+      {
+        asset: stETH,
+      },
+      STRATEGY_LAZY,
+    );
+
+  const stethBalance = useMemo(() => {
+    return BigNumber.from(
+      stethStandardizedBalance?.total?.toRawAmount()?.toString() ?? 0,
+    );
+  }, [stethStandardizedBalance?.total]);
+
   const { isMultisig, isLoading: isMultisigLoading } = useIsMultisig();
   const gasLimit = useStethSubmitGasLimit();
   const maxGasFee = useMaxGasPrice();

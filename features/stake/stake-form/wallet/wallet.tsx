@@ -19,8 +19,8 @@ import { useAccount } from '@orbykit/react';
 
 const WalletComponent: WalletComponentType = (props) => {
   const { account } = useSDK();
-  const { stakeableEther } = useStakeFormData();
-  const steth = useSTETHBalance(STRATEGY_LAZY);
+  const { stakeableEther, stethBalance } = useStakeFormData();
+  // const steth = useSTETHBalance(STRATEGY_LAZY);
 
   const stethAddress = useTokenAddress(TOKENS.STETH);
   const lidoApr = useLidoApr();
@@ -52,13 +52,13 @@ const WalletComponent: WalletComponentType = (props) => {
         <CardBalance
           small
           title="Staked amount"
-          loading={steth.initialLoading}
+          loading={!stethBalance}
           value={
             <>
               <FormatToken
                 data-testid="stEthStaked"
                 showAmountTip
-                amount={steth.data}
+                amount={stethBalance}
                 symbol="stETH"
               />
               <TokenToWallet
